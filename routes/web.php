@@ -1,8 +1,8 @@
 <?php
 
 use App\Http\Controllers\AuthController;
-use App\Http\Controllers\PasswordResetController;
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\SimplePasswordResetController;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\ReportController;
 use Illuminate\Support\Facades\Route;
@@ -15,11 +15,11 @@ Route::middleware('guest')->group(function () {
     Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
     Route::post('/register', [AuthController::class, 'register']);
 
-    // Password Reset Routes
-    Route::get('/forgot-password', [PasswordResetController::class, 'showForgotForm'])->name('password.request');
-    Route::post('/forgot-password', [PasswordResetController::class, 'sendResetLink'])->name('password.email');
-    Route::get('/reset-password/{token}', [PasswordResetController::class, 'showResetForm'])->name('password.reset');
-    Route::post('/reset-password', [PasswordResetController::class, 'resetPassword'])->name('password.update');
+    // Simple Password Reset Routes
+    Route::get('/lupa-password', [SimplePasswordResetController::class, 'showVerificationForm'])->name('simple.password.request');
+    Route::post('/lupa-password/verifikasi', [SimplePasswordResetController::class, 'verifyUser'])->name('simple.password.verify');
+    Route::get('/lupa-password/reset', [SimplePasswordResetController::class, 'showResetForm'])->name('simple.password.resetForm');
+    Route::post('/lupa-password/reset', [SimplePasswordResetController::class, 'updatePassword'])->name('simple.password.update');
 });
 
 // Authenticated Routes
