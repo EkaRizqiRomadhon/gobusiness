@@ -1,0 +1,134 @@
+@extends('layouts.guest')
+
+@section('content')
+<div class="bg-white border border-surface-200 rounded-2xl shadow-xl overflow-hidden animate-in fade-in zoom-in duration-500">
+    <div class="p-8">
+        <div class="mb-6">
+            <h2 class="text-2xl font-bold text-surface-900">Mulai Bisnis Anda</h2>
+            <p class="text-surface-500">Daftarkan akun GO Business untuk UMKM Anda</p>
+        </div>
+
+        <form action="/register" method="POST" class="space-y-4">
+            @csrf
+            <div>
+                <label for="name" class="block text-sm font-medium text-surface-700 mb-1">Nama Lengkap</label>
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-surface-400">
+                        <i data-lucide="user" class="w-5 h-5"></i>
+                    </div>
+                    <input type="text" name="name" id="name" required 
+                        class="block w-full pl-10 pr-3 py-2.5 bg-white border border-surface-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all outline-none" 
+                        placeholder="John Doe">
+                </div>
+            </div>
+
+            <div>
+                <label for="business_name" class="block text-sm font-medium text-surface-700 mb-1">Nama Usaha / Toko</label>
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-surface-400">
+                        <i data-lucide="store" class="w-5 h-5"></i>
+                    </div>
+                    <input type="text" name="business_name" id="business_name" required 
+                        class="block w-full pl-10 pr-3 py-2.5 bg-white border border-surface-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all outline-none" 
+                        placeholder="Toko Maju Jaya">
+                </div>
+            </div>
+
+            <div>
+                <label for="email" class="block text-sm font-medium text-surface-700 mb-1">Email</label>
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-surface-400">
+                        <i data-lucide="mail" class="w-5 h-5"></i>
+                    </div>
+                    <input type="email" name="email" id="email" required 
+                        class="block w-full pl-10 pr-3 py-2.5 bg-white border border-surface-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all outline-none" 
+                        placeholder="nama@email.com">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label for="password" class="block text-sm font-medium text-surface-700 mb-1">Password</label>
+                    <div class="relative">
+                        <input type="password" name="password" id="password" required 
+                            class="block w-full px-3 pr-10 py-2.5 bg-white border border-surface-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all outline-none" 
+                            placeholder="••••••••">
+                        <button type="button" id="togglePassword" class="absolute inset-y-0 right-0 pr-3 flex items-center text-surface-400 hover:text-surface-600 transition-colors focus:outline-none">
+                            <i data-lucide="eye" class="w-5 h-5" id="eyeIcon"></i>
+                            <i data-lucide="eye-off" class="w-5 h-5 hidden" id="eyeOffIcon"></i>
+                        </button>
+                    </div>
+                </div>
+                <div>
+                    <label for="password_confirmation" class="block text-sm font-medium text-surface-700 mb-1">Konfirmasi</label>
+                    <div class="relative">
+                        <input type="password" name="password_confirmation" id="password_confirmation" required 
+                            class="block w-full px-3 pr-10 py-2.5 bg-white border border-surface-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all outline-none" 
+                            placeholder="••••••••">
+                        <button type="button" id="toggleConfirmPassword" class="absolute inset-y-0 right-0 pr-3 flex items-center text-surface-400 hover:text-surface-600 transition-colors focus:outline-none">
+                            <i data-lucide="eye" class="w-5 h-5" id="eyeConfirmIcon"></i>
+                            <i data-lucide="eye-off" class="w-5 h-5 hidden" id="eyeOffConfirmIcon"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pt-2">
+                <button type="submit" class="w-full premium-gradient text-white font-semibold py-3 rounded-lg shadow-lg hover:shadow-primary-500/25 active:scale-[0.98] transition-all flex items-center justify-center">
+                    Daftar Sekarang
+                    <i data-lucide="user-plus" class="ml-2 w-5 h-5"></i>
+                </button>
+            </div>
+        </form>
+
+        <div class="mt-8 text-center">
+            <p class="text-sm text-surface-500">
+                Sudah memiliki akun? 
+                <a href="/login" class="font-semibold text-primary-600 hover:text-primary-700">Masuk di sini</a>
+            </p>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Toggle Password
+        const passwordInput = document.getElementById('password');
+        const toggleButton = document.getElementById('togglePassword');
+        const eyeIcon = document.getElementById('eyeIcon');
+        const eyeOffIcon = document.getElementById('eyeOffIcon');
+
+        toggleButton.addEventListener('click', function() {
+            const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordInput.setAttribute('type', type);
+            
+            if (type === 'text') {
+                eyeIcon.classList.add('hidden');
+                eyeOffIcon.classList.remove('hidden');
+            } else {
+                eyeIcon.classList.remove('hidden');
+                eyeOffIcon.classList.add('hidden');
+            }
+        });
+
+        // Toggle Confirm Password
+        const confirmInput = document.getElementById('password_confirmation');
+        const toggleConfirmButton = document.getElementById('toggleConfirmPassword');
+        const eyeConfirmIcon = document.getElementById('eyeConfirmIcon');
+        const eyeOffConfirmIcon = document.getElementById('eyeOffConfirmIcon');
+
+        toggleConfirmButton.addEventListener('click', function() {
+            const type = confirmInput.getAttribute('type') === 'password' ? 'text' : 'password';
+            confirmInput.setAttribute('type', type);
+            
+            if (type === 'text') {
+                eyeConfirmIcon.classList.add('hidden');
+                eyeOffConfirmIcon.classList.remove('hidden');
+            } else {
+                eyeConfirmIcon.classList.remove('hidden');
+                eyeOffConfirmIcon.classList.add('hidden');
+            }
+        });
+    });
+</script>
+@endsection
