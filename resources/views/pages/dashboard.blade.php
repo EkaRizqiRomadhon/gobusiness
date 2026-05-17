@@ -71,13 +71,13 @@
                 @php $maxVal = $weeklyTrend->max('total') ?: 1; @endphp
                 @foreach($weeklyTrend as $day)
                     @php $height = ($day->total / $maxVal) * 100; @endphp
-                    <div class="flex-1 flex flex-col items-center group">
-                        <div class="w-full bg-primary-100 rounded-t-lg group-hover:bg-primary-500 transition-all relative" style="height: {{ max($height, 5) }}%">
+                    <div class="flex-1 h-full flex flex-col justify-end items-center group">
+                        <div class="w-full bg-primary-100 rounded-t-lg group-hover:bg-primary-600 transition-all relative" style="height: {{ max($height, 5) }}%">
                             <div class="absolute -top-8 left-1/2 -translate-x-1/2 bg-surface-900 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
                                 Rp {{ number_format($day->total, 0, ',', '.') }}
                             </div>
                         </div>
-                        <p class="text-[10px] text-surface-400 font-bold mt-2 uppercase">{{ \Carbon\Carbon::parse($day->date)->format('D') }}</p>
+                        <p class="text-[10px] text-surface-400 font-bold mt-2 uppercase">{{ \Carbon\Carbon::parse($day->date)->translatedFormat('D') }}</p>
                     </div>
                 @endforeach
 

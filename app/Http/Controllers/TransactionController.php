@@ -26,9 +26,15 @@ class TransactionController extends Controller
             'tax' => 'required|numeric|min:0',
             'payment_method' => 'required|in:cash,qris',
             'reference_number' => 'nullable|string|max:100',
+            'payment_proof' => 'nullable|image|max:2048',
         ]);
 
-        return DB::transaction(function () use ($request) {
+        $payment_proof = null;
+        if ($request->hasFile('payment_proof')) {
+            $payment_proof = $request->file('payment_proof')->store('payment_proofs', 'public');
+        }
+
+        return DB::transaction(function () use ($request, $payment_proof) {
             $totalAmount = 0;
             $itemsData = [];
 
@@ -39,22 +45,23 @@ class TransactionController extends Controller
                     throw new \Exception("Stok tidak mencukupi untuk produk: {$product->name}");
                 }
 
-                $subtotal = $product->price * $item['quantity'];
-                $totalAmount += $subtotal;
+                $priceAfterDiscount = $product->price - $product->discount;
+                $itemSubtotal = ($priceAfterDiscount * (1 + $product->tax / 100)) * $item['quantity'];
+                $totalAmount += $itemSubtotal;
 
                 $itemsData[] = [
                     'product_id' => $product->id,
                     'quantity' => $item['quantity'],
                     'price_at_time' => $product->price,
-                    'subtotal' => $subtotal,
+                    'subtotal' => $itemSubtotal,
                 ];
 
                 // Update Stock
                 $product->decrement('stock', $item['quantity']);
             }
 
-            $tax = $request->tax;
-            $netAmount = $totalAmount + $tax;
+            $tax = 0; // Tax is now calculated per item
+            $netAmount = $totalAmount;
 
             $transaction = Auth::user()->transactions()->create([
                 'total_amount' => $totalAmount,
@@ -63,6 +70,7 @@ class TransactionController extends Controller
                 'status' => 'completed',
                 'payment_method' => $request->payment_method,
                 'reference_number' => $request->reference_number,
+                'payment_proof' => $payment_proof,
             ]);
 
             foreach ($itemsData as $data) {

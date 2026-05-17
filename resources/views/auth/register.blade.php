@@ -10,6 +10,16 @@
 
         <form action="/register" method="POST" class="space-y-4">
             @csrf
+            
+            @if ($errors->any())
+                <div class="p-3 bg-red-50 border border-red-200 rounded-lg">
+                    <ul class="list-disc list-inside text-xs text-red-600">
+                        @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
             <div>
                 <label for="name" class="block text-sm font-medium text-surface-700 mb-1">Nama Lengkap</label>
                 <div class="relative">

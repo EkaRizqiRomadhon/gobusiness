@@ -13,7 +13,8 @@ class Transaction extends Model
         'net_amount', 
         'status',
         'payment_method',
-        'reference_number'
+        'reference_number',
+        'payment_proof'
     ];
 
     public function user()

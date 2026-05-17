@@ -8,6 +8,7 @@ use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 
 class ReportController extends Controller
 {
@@ -77,9 +78,61 @@ class ReportController extends Controller
         return view('pages.reports.index', compact('dailyReports', 'transactions'));
     }
 
-    public function analytics()
+    public function export()
     {
         $user = Auth::user();
+        $transactions = $user->transactions()->with(['items.product'])->latest()->get();
+
+        $filename = "laporan-penjualan-" . now()->format('Y-m-d') . ".csv";
+        
+        $headers = [
+            "Content-type"        => "text/csv",
+            "Content-Disposition" => "attachment; filename=$filename",
+            "Pragma"              => "no-cache",
+            "Cache-Control"       => "must-revalidate, post-check=0, pre-check=0",
+            "Expires"             => "0"
+        ];
+
+        $callback = function() {
+            $user = Auth::user();
+            $transactions = $user->transactions()->with(['items.product'])->latest()->get();
+            $file = fopen('php://output', 'w');
+            
+            // Add BOM for Excel UTF-8 support
+            fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
+
+            // Header kolom
+            fputcsv($file, ['ID Transaksi', 'Tanggal', 'Waktu', 'Metode Pembayaran', 'No. Referensi', 'Total Transaksi', 'Pajak', 'Total Bayar', 'Bukti Pembayaran', 'Rincian Produk']);
+
+            foreach ($transactions as $trx) {
+                $items = $trx->items->map(function($item) {
+                    return ($item->product->name ?? 'Produk Terhapus') . " (" . $item->quantity . "x)";
+                })->implode(', ');
+
+                fputcsv($file, [
+                    'TRX-' . str_pad($trx->id, 5, '0', STR_PAD_LEFT),
+                    $trx->created_at->format('d/m/Y'),
+                    $trx->created_at->format('H:i'),
+                    strtoupper($trx->payment_method),
+                    $trx->reference_number ?? '-',
+                    $trx->total_amount,
+                    $trx->tax,
+                    $trx->net_amount,
+                    $trx->payment_proof ? url('storage/' . $trx->payment_proof) : '-',
+                    $items
+                ]);
+            }
+
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
+
+    public function analytics(Request $request)
+    {
+        $user = Auth::user();
+        $selectedYear = $request->get('year', now()->year);
         
         // 1. Line Chart: Daily Sales last 14 days for better trend
         $trendsData = $user->transactions()
@@ -136,6 +189,74 @@ class ReportController extends Controller
             ->take(5)
             ->get();
 
+        // 6. NEW: Monthly Sales Chart for the selected year
+        $monthlySalesData = $user->transactions()
+            ->select(
+                DB::raw('MONTH(created_at) as month'),
+                DB::raw('SUM(net_amount) as total_sales'),
+                DB::raw('SUM(net_amount) - SUM(total_amount - net_amount) as total_profit'),
+                DB::raw('COUNT(*) as trx_count')
+            )
+            ->whereYear('created_at', $selectedYear)
+            ->groupBy(DB::raw('MONTH(created_at)'))
+            ->get()
+            ->keyBy('month');
+
+        // Build monthly data for all 12 months
+        $monthlyChart = collect();
+        $monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+        
+        for ($m = 1; $m <= 12; $m++) {
+            $data = $monthlySalesData->get($m);
+            
+            // Find best-selling product for this month
+            $bestProduct = DB::table('transaction_items')
+                ->join('transactions', 'transaction_items.transaction_id', '=', 'transactions.id')
+                ->join('products', 'transaction_items.product_id', '=', 'products.id')
+                ->where('transactions.user_id', $user->id)
+                ->whereYear('transactions.created_at', $selectedYear)
+                ->whereMonth('transactions.created_at', $m)
+                ->select('products.name', DB::raw('SUM(transaction_items.quantity) as total_qty'))
+                ->groupBy('products.id', 'products.name')
+                ->orderBy('total_qty', 'desc')
+                ->first();
+
+            $monthlyChart->push((object)[
+                'month' => $m,
+                'month_name' => $monthNames[$m - 1],
+                'total_sales' => $data->total_sales ?? 0,
+                'total_profit' => $data->total_profit ?? 0,
+                'trx_count' => $data->trx_count ?? 0,
+                'best_product' => $bestProduct->name ?? '-',
+                'best_product_qty' => $bestProduct->total_qty ?? 0,
+            ]);
+        }
+
+        // 7. NEW: Product Performance for Pie Chart (real-time all-time data)
+        $productPerformance = $user->products()
+            ->leftJoin('transaction_items', 'products.id', '=', 'transaction_items.product_id')
+            ->select(
+                'products.id',
+                'products.name',
+                DB::raw('COALESCE(SUM(transaction_items.subtotal), 0) as total_revenue'),
+                DB::raw('COALESCE(SUM(transaction_items.quantity), 0) as total_sold')
+            )
+            ->groupBy('products.id', 'products.name')
+            ->orderBy('total_revenue', 'desc')
+            ->get();
+
+        $totalProductRevenue = $productPerformance->sum('total_revenue');
+
+        // Available years for the year selector
+        $availableYears = $user->transactions()
+            ->selectRaw('DISTINCT YEAR(created_at) as year')
+            ->orderBy('year', 'desc')
+            ->pluck('year');
+        
+        if ($availableYears->isEmpty()) {
+            $availableYears = collect([now()->year]);
+        }
+
         return view('pages.analytics.index', compact(
             'trends', 
             'totalSales', 
@@ -144,7 +265,12 @@ class ReportController extends Controller
             'growth', 
             'categoryRevenue', 
             'dayOfWeekSales',
-            'topProducts'
+            'topProducts',
+            'monthlyChart',
+            'selectedYear',
+            'availableYears',
+            'productPerformance',
+            'totalProductRevenue'
         ));
     }
 }

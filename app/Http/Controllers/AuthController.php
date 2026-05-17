@@ -49,21 +49,14 @@ class AuthController extends Controller
             'name' => $request->name,
             'business_name' => $request->business_name,
             'email' => $request->email,
-            'password' => Hash::make($request->password),
-        ]);
-
-        // Create default categories
-        $user->categories()->createMany([
-            ['name' => 'Makanan'],
-            ['name' => 'Minuman'],
-            ['name' => 'Snack'],
+            'password' => $request->password,
         ]);
 
         Auth::login($user);
         
         $request->session()->regenerate();
 
-        return redirect()->route('dashboard');
+        return redirect()->route('business.select');
     }
 
     public function logout(Request $request)

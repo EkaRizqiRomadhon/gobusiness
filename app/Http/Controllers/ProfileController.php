@@ -19,11 +19,13 @@ class ProfileController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255',
+            'business_name' => 'required|string|max:255',
             'qris_image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
         ]);
 
         $user = Auth::user();
         $user->name = $request->name;
+        $user->business_name = $request->business_name;
 
         if ($request->hasFile('qris_image')) {
             // Delete old QRIS if exists

@@ -44,9 +44,13 @@
                         <i data-lucide="shopping-cart" class="w-5 h-5 mr-3"></i>
                         <span class="font-medium">Transaksi</span>
                     </a>
-                    <a href="/stock" class="flex items-center px-4 py-2 text-surface-600 hover:bg-primary-50 hover:text-primary-600 rounded-lg transition-colors {{ request()->is('stock*') ? 'bg-primary-50 text-primary-600' : '' }}">
+                    <a href="/stock" class="flex items-center px-4 py-2 text-surface-600 hover:bg-primary-50 hover:text-primary-600 rounded-lg transition-colors {{ request()->is('stock') ? 'bg-primary-50 text-primary-600' : '' }}">
                         <i data-lucide="package" class="w-5 h-5 mr-3"></i>
                         <span class="font-medium">Stok Produk</span>
+                    </a>
+                    <a href="/stock/expiry" class="flex items-center px-4 py-2 text-surface-600 hover:bg-primary-50 hover:text-primary-600 rounded-lg transition-colors {{ request()->is('stock/expiry*') ? 'bg-primary-50 text-primary-600' : '' }}">
+                        <i data-lucide="timer" class="w-5 h-5 mr-3"></i>
+                        <span class="font-medium">Masa Expired</span>
                     </a>
                     <a href="/reports" class="flex items-center px-4 py-2 text-surface-600 hover:bg-primary-50 hover:text-primary-600 rounded-lg transition-colors {{ request()->is('reports*') ? 'bg-primary-50 text-primary-600' : '' }}">
                         <i data-lucide="file-text" class="w-5 h-5 mr-3"></i>

@@ -25,7 +25,7 @@
             <h1 class="text-3xl font-bold tracking-tight text-primary-950">GO Business</h1>
         </div>
 
-        <div class="w-full max-w-md">
+        <div class="w-full @yield('content-width', 'max-w-md')">
             @yield('content')
         </div>
 

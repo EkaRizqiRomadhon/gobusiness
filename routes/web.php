@@ -22,21 +22,28 @@ Route::middleware('guest')->group(function () {
     Route::post('/lupa-password/reset', [SimplePasswordResetController::class, 'updatePassword'])->name('simple.password.update');
 });
 
-// Authenticated Routes
+// Authenticated Routes (no business type required)
 Route::middleware('auth')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+    Route::get('/select-business', [App\Http\Controllers\BusinessSelectionController::class, 'show'])->name('business.select');
+    Route::post('/select-business', [App\Http\Controllers\BusinessSelectionController::class, 'store'])->name('business.select.store');
+});
 
+// Authenticated Routes (business type required)
+Route::middleware(['auth', 'business.selected'])->group(function () {
     Route::get('/dashboard', [ReportController::class, 'dashboard'])->name('dashboard');
 
     Route::get('/transactions', [TransactionController::class, 'index'])->name('transactions.index');
     Route::post('/transactions', [TransactionController::class, 'store'])->name('transactions.store');
 
     Route::get('/stock', [ProductController::class, 'index'])->name('stock.index');
+    Route::get('/stock/expiry', [ProductController::class, 'expiry'])->name('stock.expiry');
     Route::post('/stock', [ProductController::class, 'store'])->name('stock.store');
     Route::put('/stock/{product}', [ProductController::class, 'update'])->name('stock.update');
     Route::delete('/stock/{product}', [ProductController::class, 'destroy'])->name('stock.destroy');
 
     Route::get('/reports', [ReportController::class, 'reports'])->name('reports');
+    Route::get('/reports/export', [ReportController::class, 'export'])->name('reports.export');
     Route::get('/analytics', [ReportController::class, 'analytics'])->name('analytics');
 
     Route::get('/profile', [App\Http\Controllers\ProfileController::class, 'index'])->name('profile.index');

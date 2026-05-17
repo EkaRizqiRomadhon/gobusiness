@@ -48,6 +48,7 @@
                         <th class="px-6 py-4 text-xs font-bold text-surface-500 uppercase tracking-wider">Kategori</th>
                         <th class="px-6 py-4 text-xs font-bold text-surface-500 uppercase tracking-wider">Harga</th>
                         <th class="px-6 py-4 text-xs font-bold text-surface-500 uppercase tracking-wider">Stok</th>
+                        <th class="px-6 py-4 text-xs font-bold text-surface-500 uppercase tracking-wider">Expired</th>
                         <th class="px-6 py-4 text-xs font-bold text-surface-500 uppercase tracking-wider">Aksi</th>
                     </tr>
                 </thead>
@@ -56,7 +57,7 @@
                     <tr class="hover:bg-surface-50 transition-colors">
                         <td class="px-6 py-4 whitespace-nowrap">
                             @if($product->image)
-                                <img src="{{ asset('storage/' . $product->image) }}" class="w-12 h-12 rounded-lg object-cover border border-surface-200 shadow-sm" alt="{{ $product->name }}">
+                                <img src="{{ Storage::url($product->image) }}" class="w-12 h-12 rounded-lg object-cover border border-surface-200 shadow-sm" alt="{{ $product->name }}">
                             @else
                                 <div class="w-12 h-12 rounded-lg bg-surface-100 flex items-center justify-center text-surface-400">
                                     <i data-lucide="image" class="w-6 h-6"></i>
@@ -72,13 +73,45 @@
                                 {{ $product->category->name ?? 'Tanpa Kategori' }}
                             </span>
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-surface-900">
-                            Rp {{ number_format($product->price, 0, ',', '.') }}
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex flex-col">
+                                <span class="text-sm font-bold text-surface-900">Rp {{ number_format($product->price, 0, ',', '.') }}</span>
+                                @if($product->discount > 0 || $product->tax > 0)
+                                    <div class="flex items-center gap-1.5 mt-0.5">
+                                        @if($product->discount > 0)
+                                            <span class="text-[10px] font-bold text-red-500 bg-red-50 px-1 rounded">-{{ number_format($product->discount, 0, ',', '.') }}</span>
+                                        @endif
+                                        @if($product->tax > 0)
+                                            <span class="text-[10px] font-bold text-blue-500 bg-blue-50 px-1 rounded">+{{ $product->tax }}%</span>
+                                        @endif
+                                    </div>
+                                @endif
+                            </div>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             <span class="text-sm {{ $product->stock <= $product->min_stock_threshold ? 'text-red-600 font-bold' : 'text-surface-600' }}">
                                 {{ $product->stock }} unit
                             </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            @if($product->expired_at)
+                                @php $status = $product->expiryStatus(); @endphp
+                                <span class="inline-flex items-center px-2.5 py-1 text-xs font-bold rounded-full
+                                    {{ $status === 'expired' ? 'bg-red-100 text-red-700' : '' }}
+                                    {{ $status === 'critical' ? 'bg-orange-100 text-orange-700' : '' }}
+                                    {{ $status === 'warning' ? 'bg-yellow-100 text-yellow-700' : '' }}
+                                    {{ $status === 'safe' ? 'bg-green-100 text-green-700' : '' }}
+                                ">
+                                    @if($status === 'expired')
+                                        <i data-lucide="alert-triangle" class="w-3 h-3 mr-1"></i>
+                                    @elseif($status === 'critical')
+                                        <i data-lucide="alert-circle" class="w-3 h-3 mr-1"></i>
+                                    @endif
+                                    {{ $product->expired_at->format('d/m/Y') }}
+                                </span>
+                            @else
+                                <span class="text-xs text-surface-400">-</span>
+                            @endif
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                             <div class="flex space-x-3">
@@ -91,7 +124,7 @@
                         </td>
                     </tr>
                     @empty
-                    <tr><td colspan="6" class="px-6 py-12 text-center text-surface-400">Belum ada produk.</td></tr>
+                    <tr><td colspan="7" class="px-6 py-12 text-center text-surface-400">Belum ada produk.</td></tr>
                     @endforelse
                 </tbody>
             </table>
@@ -133,6 +166,22 @@
                     <div>
                         <label class="block text-sm font-bold text-surface-700 mb-1">Stok</label>
                         <input type="number" name="stock" required class="w-full px-4 py-2 bg-surface-50 border border-surface-200 rounded-lg outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-surface-700 mb-1">Diskon (Rp)</label>
+                        <input type="number" name="discount" class="w-full px-4 py-2 bg-surface-50 border border-surface-200 rounded-lg outline-none" placeholder="0">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-surface-700 mb-1">Pajak (%)</label>
+                        <input type="number" step="0.01" name="tax" class="w-full px-4 py-2 bg-surface-50 border border-surface-200 rounded-lg outline-none" placeholder="0">
+                    </div>
+                    <div class="col-span-2">
+                        <label class="block text-sm font-bold text-surface-700 mb-1">
+                            <i data-lucide="calendar-clock" class="w-4 h-4 inline mr-1"></i>
+                            Tanggal Expired <span class="text-surface-400 font-normal">(Opsional)</span>
+                        </label>
+                        <input type="date" name="expired_at" class="w-full px-4 py-2 bg-surface-50 border border-surface-200 rounded-lg outline-none focus:ring-2 focus:ring-primary-500">
+                        <p class="text-xs text-surface-400 mt-1">Kosongkan jika produk tidak memiliki tanggal kedaluwarsa.</p>
                     </div>
                 </div>
                 <div class="pt-4 flex gap-3">
@@ -179,6 +228,22 @@
                         <label class="block text-sm font-bold text-surface-700 mb-1">Stok</label>
                         <input type="number" name="stock" id="edit_stock" required class="w-full px-4 py-2 bg-surface-50 border border-surface-200 rounded-lg outline-none">
                     </div>
+                    <div>
+                        <label class="block text-sm font-bold text-surface-700 mb-1">Diskon (Rp)</label>
+                        <input type="number" name="discount" id="edit_discount" class="w-full px-4 py-2 bg-surface-50 border border-surface-200 rounded-lg outline-none" placeholder="0">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-surface-700 mb-1">Pajak (%)</label>
+                        <input type="number" step="0.01" name="tax" id="edit_tax" class="w-full px-4 py-2 bg-surface-50 border border-surface-200 rounded-lg outline-none" placeholder="0">
+                    </div>
+                    <div class="col-span-2">
+                        <label class="block text-sm font-bold text-surface-700 mb-1">
+                            <i data-lucide="calendar-clock" class="w-4 h-4 inline mr-1"></i>
+                            Tanggal Expired <span class="text-surface-400 font-normal">(Opsional)</span>
+                        </label>
+                        <input type="date" name="expired_at" id="edit_expired_at" class="w-full px-4 py-2 bg-surface-50 border border-surface-200 rounded-lg outline-none focus:ring-2 focus:ring-primary-500">
+                        <p class="text-xs text-surface-400 mt-1">Kosongkan jika produk tidak memiliki tanggal kedaluwarsa.</p>
+                    </div>
                 </div>
                 <input type="hidden" name="min_stock_threshold" id="edit_threshold">
                 <div class="pt-4 flex gap-3">
@@ -203,6 +268,9 @@
         document.getElementById('edit_price').value = product.price;
         document.getElementById('edit_stock').value = product.stock;
         document.getElementById('edit_threshold').value = product.min_stock_threshold;
+        document.getElementById('edit_expired_at').value = product.expired_at ? product.expired_at.split('T')[0] : '';
+        document.getElementById('edit_discount').value = product.discount || 0;
+        document.getElementById('edit_tax').value = product.tax || 0;
         toggleModal('editProductModal');
     }
     document.addEventListener('DOMContentLoaded', () => lucide.createIcons());

@@ -11,6 +11,10 @@
             <p class="text-surface-500 text-sm">Pantau performa harian dan ringkasan keuangan bisnis Anda.</p>
         </div>
         <div class="flex gap-2">
+            <a href="{{ route('reports.export') }}" class="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-bold hover:bg-green-700 transition-all shadow-md active:scale-95">
+                <i data-lucide="file-spreadsheet" class="w-4 h-4 mr-2"></i>
+                Export Excel (CSV)
+            </a>
             <button onclick="window.print()" class="flex items-center px-4 py-2 bg-white border border-surface-200 rounded-lg text-sm font-medium text-surface-700 hover:bg-surface-50 transition-colors">
                 <i data-lucide="printer" class="w-4 h-4 mr-2"></i>
                 Cetak Laporan
@@ -196,6 +200,14 @@
                     <span class="text-xs font-mono font-bold text-primary-600 bg-primary-50 px-2 py-0.5 rounded" id="modalRefNumber"></span>
                 </div>
             </div>
+
+            <!-- Payment Proof Image -->
+            <div id="modalProofRow" class="hidden pt-4 border-t border-gray-100">
+                <p class="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-2">Bukti Pembayaran</p>
+                <div class="rounded-xl overflow-hidden border border-gray-100 bg-gray-50">
+                    <img id="modalProofImage" src="" alt="Bukti Pembayaran" class="w-full h-auto max-h-64 object-contain">
+                </div>
+            </div>
         </div>
 
         <!-- Footer -->
@@ -246,6 +258,17 @@
             document.getElementById('modalRefNumber').innerText = trx.reference_number;
         } else {
             refRow.classList.replace('flex', 'hidden');
+        }
+
+        // Payment Proof
+        const proofRow = document.getElementById('modalProofRow');
+        const proofImage = document.getElementById('modalProofImage');
+        if (trx.payment_proof) {
+            proofRow.classList.remove('hidden');
+            proofImage.src = '/storage/' + trx.payment_proof;
+        } else {
+            proofRow.classList.add('hidden');
+            proofImage.src = '';
         }
 
         // Items List
